@@ -1,4 +1,6 @@
 from random import *
+from spy import *
+from resistance_member import *
 
 # For each array that represents a 'mode' of the game (determined by
 # the number of players) the first value of the array is the number
@@ -11,14 +13,20 @@ eight_players = [8,3,3,4,4,5,5]
 nine_players = [9,3,3,4,4,5,5]
 ten_players = [10,4,3,4,4,5,5]
 
-class The_Resistance:
+class Resistance_Game:
 
   def __init__(self, game_info):
-    self.round_one = game_info[2]
-    self.round_two = game_info[3]
-    self.round_three = game_info[4]
-    self.round_four = game_info[5]
-    self.round_five = game_info[6]
+    self.round_counts = []
+    for i in range(5):
+      self.round_counts.append(game_info[i + 2])
+
+    # represents the leader in the self.players array, will increment
+    # by one after every turn
+    self.leader_index = 0
+
+    self.round = 0          # the round the game state is currently in
+    self.missions_won = 0   # missions won by the resistance
+    self.missions_lost = 0  # missions lost by the resistance
 
     num_spies = game_info[1]
     num_players = game_info[0]
@@ -37,21 +45,35 @@ class The_Resistance:
     self.players = []
     for i in range(num_players):
       if i in spy_indicies:
-        self.players.append(Player('spy'))
+        self.players.append(Spy())
       else:
-        self.players.append(Player('resistance'))
-      
+        self.players.append(Resistance_Member())
 
-class Player:
+  def play_game(self):
+    for i in range(5):
+      play_round()
+      self.round += 1
+      self.leader_index += 1
 
-  def __init__(self, identity):
-    self.identity = identity    # either 'spy' or 'resistance'
+  def play_round(self):
+    while True:
+      # The leader selects the team going on the mission
+      mission_team = self.players[self.leader_index].select_mission_team(self.round, self.round_counts[self.round], self.missions_lost)
 
-  def __str__(self):
-    return self.identity
+      # The players vote on the team
+      vote_total = 0
+      for player in self.players:
+        vote_total += player.vote_on_mission(self.round, self.missions_lost, mission_team)
 
 
-game = The_Resistance(six_players)
+      # If the vote succeeds, the players will go on the mission
+      # If not, the leadership changes and we repeat this process
+
+    # The players go on the mission and submit their mission pass/fail
+
+
+
+game = Resistance_Game(six_players)
 for player in game.players:
   print player
 
