@@ -28,26 +28,34 @@ class Resistance_Game:
     self.missions_won = 0   # missions won by the resistance
     self.missions_lost = 0  # missions lost by the resistance
 
-    num_spies = game_info[1]
-    num_players = game_info[0]
+    # The mission history is a dictionary of the round numbers 0-4 mapped
+    # to the outcomes: 
+    #    [[1, 4], [P, F]]
+    #  where the first list is the list of members that go on the mission
+    #  and the second list is the list of votes (does not correspond with the 
+    #  ordering of the team list)
+    mission_history = {}
+
+    self.num_spies = game_info[1]
+    self.num_players = game_info[0]
 
     # spy selection
     spy_indicies = []
-    spy_indicies.append(randint(0, num_players - 1))
-    for i in range(num_spies-1):
+    spy_indicies.append(randint(0, self.num_players - 1))
+    for i in range(self.num_spies-1):
       while True:
-        rand_index = randint(0, num_players - 1)
+        rand_index = randint(0, self.num_players - 1)
         if rand_index not in spy_indicies:
           break
       spy_indicies.append(rand_index)
 
     # making the list of players
     self.players = []
-    for i in range(num_players):
+    for i in range(self.num_players):
       if i in spy_indicies:
-        self.players.append(Spy())
+        self.players.append(Spy(self.num_players, i, spy_indicies))
       else:
-        self.players.append(Resistance_Member())
+        self.players.append(Resistance_Member(self.num_players, i))
 
   def play_game(self):
     for i in range(5):
@@ -65,11 +73,15 @@ class Resistance_Game:
       for player in self.players:
         vote_total += player.vote_on_mission(self.round, self.missions_lost, mission_team)
 
+      if float(vote_total)/float(self.num_players) > 0.5:
+        # mission success
+        break
+      else:
+        # mission fails, the leadership changes and we repeat this process
+        self.leader_index += 1
 
-      # If the vote succeeds, the players will go on the mission
-      # If not, the leadership changes and we repeat this process
+    # The mission team will go on the mission and either pass or fail the mission
 
-    # The players go on the mission and submit their mission pass/fail
 
 
 
