@@ -27,6 +27,7 @@ class Resistance_Game:
     self.round = 0          # the round the game state is currently in
     self.missions_won = 0   # missions won by the resistance
     self.missions_lost = 0  # missions lost by the resistance
+    self.game_over = 0
 
     # The mission history is a dictionary of the round numbers 0-4 mapped
     # to the outcomes: 
@@ -34,7 +35,7 @@ class Resistance_Game:
     #  where the first list is the list of members that go on the mission
     #  and the second list is the list of votes (does not correspond with the 
     #  ordering of the team list)
-    mission_history = {}
+    self.mission_history = {}
 
     self.num_spies = game_info[1]
     self.num_players = game_info[0]
@@ -53,25 +54,29 @@ class Resistance_Game:
     self.players = []
     for i in range(self.num_players):
       if i in spy_indicies:
-        self.players.append(Spy(self.num_players, i, spy_indicies))
+        self.players.append(Spy(self.num_players, i, self.round_counts, spy_indicies))
       else:
-        self.players.append(Resistance_Member(self.num_players, i))
+        self.players.append(Resistance_Member(self.num_players, i, self.round_counts))
 
   def play_game(self):
     for i in range(5):
-      play_round()
-      self.round += 1
-      self.leader_index += 1
+      if not self.game_over:
+        self.play_round()
+        self.round += 1
+        self.leader_index += 1
+        self.update_players()
+      else:
+        break
 
   def play_round(self):
     while True:
-      # The leader selects the team going on the mission
-      mission_team = self.players[self.leader_index].select_mission_team(self.round, self.round_counts[self.round], self.missions_lost)
+      # The leader selects the team going on the mission (list of indicies of the players in self.players)
+      mission_team = self.players[self.leader_index].select_mission_team()
 
       # The players vote on the team
       vote_total = 0
       for player in self.players:
-        vote_total += player.vote_on_mission(self.round, self.missions_lost, mission_team)
+        vote_total += player.vote_on_mission(mission_team)
 
       if float(vote_total)/float(self.num_players) > 0.5:
         # mission success
@@ -81,13 +86,45 @@ class Resistance_Game:
         self.leader_index += 1
 
     # The mission team will go on the mission and either pass or fail the mission
+    mission_results = []
+    for i in range(self.num_players):
+      if i in mission_team:
+        mission_results.append(self.players[i].go_on_mission(mission_team))
+    shuffle(mission_results)
 
+    # add the results to the mission history
+    self.mission_history[self.round] = [mission_team, mission_results]
 
+    # Determine the next state based on the result of this round
+    if 'F' in mission_results:
+      self.missions_lost += 1
+      if self.missions_lost >= 3:
+        self.end_of_game()
+    else:
+      self.missions_won += 1
+      if self.missions_won >= 3:
+        self.end_of_game()
 
+  def end_of_game(self):
+    if self.missions_won >= 3 or self.missions_lost >= 3:
+      self.game_over = 1
+      for i in range(self.round + 1):
+        print self.mission_history[i]
+      if self.missions_won >= 3:
+        print "The Resistance WON!"
+      else:
+        print "The Reistance has been thwarted, the Spies WON!"
+    else:
+      print "A problem has occured: end state has been reached, but neither team has won :("
+
+  def update_players(self):
+    for player in self.players:
+      player.round = self.round
+      player.missions_lost = self.missions_lost
+      player.mission_history = self.mission_history
 
 game = Resistance_Game(six_players)
-for player in game.players:
-  print player
+game.play_game()
 
 
 
