@@ -28,6 +28,7 @@ class Resistance_Game:
     self.missions_won = 0   # missions won by the resistance
     self.missions_lost = 0  # missions lost by the resistance
     self.game_over = 0
+    self.game_won = 0       # 0 if lost, 1 if won
 
     # The mission history is a dictionary of the round numbers 0-4 mapped
     # to the outcomes: 
@@ -108,12 +109,13 @@ class Resistance_Game:
   def end_of_game(self):
     if self.missions_won >= 3 or self.missions_lost >= 3:
       self.game_over = 1
-      for i in range(self.round + 1):
-        print self.mission_history[i]
+      # for i in range(self.round + 1):
+      #   print self.mission_history[i]
       if self.missions_won >= 3:
-        print "The Resistance WON!"
-      else:
-        print "The Reistance has been thwarted, the Spies WON!"
+        self.game_won = 1
+        # print "The Resistance WON!"
+      # else:
+        # print "The Reistance has been thwarted, the Spies WON!"
     else:
       print "A problem has occured: end state has been reached, but neither team has won :("
 
@@ -123,8 +125,8 @@ class Resistance_Game:
       player.missions_lost = self.missions_lost
       player.mission_history = self.mission_history
 
-game = Resistance_Game(six_players)
-game.play_game()
+# game = Resistance_Game(six_players)
+# game.play_game()
 
 
 
